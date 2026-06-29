@@ -1,212 +1,564 @@
 import streamlit as st
-from streamlit.components.v1 import html
 from collections import defaultdict
 
 # ============================================================
 # CONFIGURAÇÃO DA PÁGINA
 # ============================================================
 st.set_page_config(
-    page_title="Portfólio Power BI",
+    page_title="Portfólio Power BI | Dashboards que Transformam Dados em Lucro",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ============================================================
-# PALETA DE CORES - AUTORIDADE POWER BI
+# ESTILO LANDING PAGE PREMIUM — FULL SCREEN, SEM SIDEBAR
 # ============================================================
-COLORS = {
-    "primary": "#F2C811",
-    "secondary": "#EAAA00",
-    "dark": "#1A1A2E",
-    "darker": "#0F0F1A",
-    "surface": "#16213E",
-    "text_primary": "#FFFFFF",
-    "text_secondary": "#A0AEC0",
-    "text_muted": "#718096",
-    "accent": "#00B4D8",
-    "border": "#2D3748",
-    "card_bg": "#1E293B",
-    "hover": "#2D3748",
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, .main, [data-testid="stAppViewContainer"] {
+    background-color: #060912 !important;
+    font-family: 'DM Sans', sans-serif !important;
 }
 
-# ============================================================
-# CSS CUSTOMIZADO
-# ============================================================
-custom_css = f"""
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    
-    * {{ font-family: 'Inter', sans-serif !important; }}
-    
-    [data-testid="stSidebar"] {{
-        background: linear-gradient(180deg, {COLORS["dark"]} 0%, {COLORS["darker"]} 100%) !important;
-        border-right: 1px solid {COLORS["border"]} !important;
-        min-width: 320px !important;
-        max-width: 320px !important;
-    }}
-    
-    [data-testid="stSidebar"] > div:first-child {{
-        background: transparent !important;
-        padding-top: 0 !important;
-    }}
-    
-    [data-testid="stSidebar"] button[kind="headerNoPadding"] {{
-        display: none !important;
-    }}
-    
-    .main .block-container {{
-        padding: 2rem 3rem !important;
-        max-width: 1400px !important;
-        background: {COLORS["darker"]} !important;
-    }}
-    
-    .collapse-btn {{
-        position: fixed;
-        top: 1rem;
-        left: 1rem;
-        z-index: 999999;
-        background: {COLORS["surface"]};
-        border: 1px solid {COLORS["border"]};
-        border-radius: 8px;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        color: {COLORS["text_primary"]};
-        font-size: 18px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }}
-    
-    .collapse-btn:hover {{
-        background: {COLORS["primary"]};
-        color: {COLORS["dark"]};
-        transform: scale(1.05);
-    }}
-    
-    .sidebar-logo {{
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 1.5rem 1rem;
-        margin-bottom: 0.5rem;
-        border-bottom: 1px solid {COLORS["border"]};
-    }}
-    
-    .sidebar-logo-icon {{
-        width: 40px;
-        height: 40px;
-        background: linear-gradient(135deg, {COLORS["primary"]}, {COLORS["secondary"]});
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-    }}
-    
-    .sidebar-logo-text {{
-        color: {COLORS["text_primary"]} !important;
-        font-size: 1.3rem;
-        font-weight: 700;
-    }}
-    
-    .sidebar-logo-sub {{
-        color: {COLORS["text_muted"]} !important;
-        font-size: 0.75rem;
-    }}
-    
-    .menu-section-label {{
-        color: {COLORS["text_muted"]};
-        font-size: 0.65rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        padding: 1rem 1rem 0.5rem 1rem;
-        margin-top: 0.5rem;
-    }}
-    
-    .main-header {{
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid {COLORS["border"]};
-    }}
-    
-    .main-header h1 {{
-        font-size: 1.8rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, {COLORS["primary"]}, {COLORS["accent"]});
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }}
-    
-    .main-header p {{
-        color: {COLORS["text_muted"]} !important;
-        font-size: 0.95rem;
-        margin-top: 0.25rem;
-    }}
-    
-    .embed-container {{
-        position: relative;
-        width: 100%;
-        height: 85vh;
-        border-radius: 16px;
-        overflow: hidden;
-        border: 1px solid {COLORS["border"]};
-        background: {COLORS["card_bg"]};
-    }}
-    
-    .embed-container iframe {{
-        width: 100%;
-        height: 100%;
-        border: none;
-    }}
-    
-    .sidebar-footer {{
-        position: sticky;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        padding: 1rem;
-        border-top: 1px solid {COLORS["border"]};
-        background: {COLORS["darker"]};
-        text-align: center;
-        margin-top: auto;
-    }}
-    
-    .sidebar-footer p {{
-        color: {COLORS["text_muted"]} !important;
-        font-size: 0.7rem;
-        margin: 0;
-    }}
-    
-    ::-webkit-scrollbar {{ width: 5px; }}
-    ::-webkit-scrollbar-track {{ background: {COLORS["darker"]}; }}
-    ::-webkit-scrollbar-thumb {{ background: {COLORS["border"]}; border-radius: 3px; }}
-    ::-webkit-scrollbar-thumb:hover {{ background: {COLORS["primary"]}; }}
-    
-    header[data-testid="stHeader"] {{ display: none !important; }}
-    footer {{ display: none !important; }}
-    
-    @media (max-width: 768px) {{
-        .main .block-container {{ padding: 1rem !important; }}
-        .main-header h1 {{ font-size: 1.4rem; }}
-    }}
+[data-testid="stAppViewContainer"] {
+    background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,180,216,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 80% 60%, rgba(0,100,180,0.06) 0%, transparent 50%);
+}
+
+[data-testid="stHeader"] { background: transparent !important; }
+
+/* Remove sidebar completamente */
+[data-testid="stSidebar"] { display: none !important; }
+[data-testid="stSidebarCollapsedControl"] { display: none !important; }
+
+.block-container {
+    max-width: 1400px !important;
+    padding: 0 2rem 4rem 2rem !important;
+}
+
+/* ===== NAVBAR FIXO ===== */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 40px;
+    background: rgba(6, 9, 18, 0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #00b4d8, #0077b6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.navbar-logo-text {
+    font-family: 'Syne', sans-serif !important;
+    color: #f0f4ff;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.navbar-links {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+}
+
+.navbar-links a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    cursor: pointer;
+}
+
+.navbar-links a:hover {
+    color: #00b4d8;
+}
+
+.navbar-cta {
+    background: linear-gradient(135deg, #00b4d8, #0077b6);
+    color: #ffffff !important;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none !important;
+    transition: opacity 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.navbar-cta:hover { opacity: 0.9; }
+
+/* ===== HERO SECTION ===== */
+.hero-section {
+    text-align: center;
+    padding: 140px 20px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.hero-badge {
+    display: inline-block;
+    font-family: 'Syne', sans-serif !important;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #00b4d8;
+    border: 1px solid rgba(0,180,216,0.25);
+    background: rgba(0,180,216,0.06);
+    padding: 7px 18px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+}
+
+.hero-title {
+    font-family: 'Syne', sans-serif !important;
+    font-size: clamp(2.5rem, 5.5vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -2px;
+    color: #f0f4ff;
+    margin-bottom: 24px;
+    max-width: 900px;
+}
+
+.hero-title .accent {
+    background: linear-gradient(135deg, #00b4d8 0%, #48cae4 50%, #90e0ef 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+    font-size: 1.15rem;
+    font-weight: 300;
+    color: #7b8ba8;
+    max-width: 560px;
+    margin-bottom: 40px;
+    line-height: 1.7;
+}
+
+.hero-cta-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 60px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.hero-cta-primary {
+    background: linear-gradient(135deg, #00b4d8, #0077b6);
+    color: #ffffff !important;
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif !important;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-decoration: none !important;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 30px rgba(0,180,216,0.25);
+}
+
+.hero-cta-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,180,216,0.35);
+}
+
+.hero-cta-secondary {
+    background: rgba(255,255,255,0.03);
+    color: #94a3b8 !important;
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-family: 'Syne', sans-serif !important;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none !important;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+}
+
+.hero-cta-secondary:hover {
+    border-color: rgba(0,180,216,0.3);
+    color: #00b4d8 !important;
+}
+
+/* ===== STATS BAR ===== */
+.stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    flex-wrap: wrap;
+    padding: 30px 20px;
+    background: rgba(255,255,255,0.015);
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 20px;
+    max-width: 800px;
+    width: 100%;
+    backdrop-filter: blur(10px);
+}
+
+.stat-item { text-align: center; }
+.stat-number {
+    font-family: 'Syne', sans-serif !important;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #00b4d8;
+    line-height: 1;
+}
+.stat-label {
+    font-size: 0.7rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 8px;
+}
+
+/* ===== SECTION HEADERS ===== */
+.section-header {
+    text-align: center;
+    padding: 80px 20px 40px;
+}
+
+.section-label {
+    font-family: 'Syne', sans-serif !important;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #00b4d8;
+    margin-bottom: 12px;
+}
+
+.section-title {
+    font-family: 'Syne', sans-serif !important;
+    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    font-weight: 800;
+    color: #f0f4ff;
+    line-height: 1.2;
+    margin-bottom: 16px;
+}
+
+.section-desc {
+    font-size: 1rem;
+    color: #64748b;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* ===== CATEGORY TABS ===== */
+.category-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 0 20px 40px;
+}
+
+/* ===== CARDS GRID ===== */
+[data-testid="stHorizontalBlock"] {
+    align-items: stretch !important;
+}
+
+[data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+[data-testid="stHorizontalBlock"] > [data-testid="stColumn"] > [data-testid="stVerticalBlockBorderWrapper"],
+[data-testid="stHorizontalBlock"] > [data-testid="stColumn"] > div {
+    height: 100% !important;
+    flex: 1 !important;
+}
+
+.ux-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.035) 0%, rgba(0,0,0,0.2) 100%);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 20px;
+    padding: 28px;
+    height: 100%;
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.ux-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,180,216,0.3), transparent);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.ux-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(0,180,216,0.25);
+    box-shadow: 0 20px 50px rgba(0,180,216,0.08);
+}
+
+.ux-card:hover::before {
+    opacity: 1;
+}
+
+.card-top { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
+.card-icon-box {
+    font-size: 32px;
+    background: rgba(0,180,216,0.06);
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(0,180,216,0.1);
+    line-height: 1;
+    flex-shrink: 0;
+}
+.ux-card-title {
+    font-family: 'Syne', sans-serif !important;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #f0f4ff;
+    line-height: 1.3;
+    margin-top: 4px;
+}
+
+.card-category-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #00b4d8;
+    background: rgba(0,180,216,0.08);
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(0,180,216,0.15);
+}
+
+.ux-card-desc {
+    font-size: 0.88rem;
+    color: #94a3b8;
+    line-height: 1.65;
+    margin-bottom: 24px;
+    flex-grow: 1;
+}
+
+.card-actions { display: flex; flex-direction: column; gap: 14px; margin-top: auto; }
+
+.btn-direct {
+    background: linear-gradient(135deg, #00b4d8, #0077b6);
+    color: #ffffff !important;
+    padding: 14px;
+    border-radius: 12px;
+    text-align: center;
+    text-decoration: none !important;
+    font-family: 'Syne', sans-serif !important;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    display: block;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+}
+
+.btn-direct:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,180,216,0.3);
+}
+
+.share-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    padding-top: 14px;
+}
+
+.share-txt { font-size: 0.72rem; color: #475569; font-weight: 500; }
+.share-links { display: flex; gap: 8px; }
+
+.share-btn-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: all 0.2s;
+}
+.share-btn-item.wa {
+    background: rgba(37, 211, 102, 0.08);
+    color: #25D366 !important;
+    border: 1px solid rgba(37, 211, 102, 0.15);
+}
+.share-btn-item.wa:hover { background: rgba(37, 211, 102, 0.15); }
+.share-btn-item.li {
+    background: rgba(10, 102, 194, 0.08);
+    color: #0A66C2 !important;
+    border: 1px solid rgba(10, 102, 194, 0.15);
+}
+.share-btn-item.li:hover { background: rgba(10, 102, 194, 0.15); }
+
+/* ===== SEARCH BAR ===== */
+div[data-testid="stTextInput"] input {
+    background: rgba(255,255,255,0.03) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(0,180,216,0.15) !important;
+    border-radius: 14px !important;
+    padding: 14px 24px !important;
+    font-size: 0.95rem !important;
+}
+div[data-testid="stTextInput"] input:focus {
+    border-color: rgba(0,180,216,0.5) !important;
+    background: rgba(0,180,216,0.02) !important;
+    box-shadow: 0 0 20px rgba(0,180,216,0.1);
+}
+
+/* ===== EMBED VIEW ===== */
+.embed-view {
+    padding-top: 80px;
+}
+
+.embed-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.embed-back-btn {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    color: #94a3b8;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.embed-back-btn:hover {
+    border-color: rgba(0,180,216,0.3);
+    color: #00b4d8;
+}
+
+.embed-title {
+    font-family: 'Syne', sans-serif !important;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #f0f4ff;
+}
+
+.embed-container {
+    position: relative;
+    width: 100%;
+    height: 82vh;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.015);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.embed-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* ===== FOOTER ===== */
+.landing-footer {
+    text-align: center;
+    padding: 60px 20px 40px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    margin-top: 60px;
+}
+
+.landing-footer p {
+    color: #475569;
+    font-size: 0.8rem;
+}
+
+.landing-footer .footer-brand {
+    font-family: 'Syne', sans-serif !important;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #f0f4ff;
+    margin-bottom: 8px;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #060912; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,180,216,0.4); }
+
+/* ===== HIDE STREAMLIT ELEMENTS ===== */
+footer { display: none !important; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .navbar { padding: 12px 20px; }
+    .navbar-links { display: none; }
+    .hero-section { padding: 100px 16px 40px; }
+    .block-container { padding: 0 1rem 2rem 1rem !important; }
+    .stats-bar { gap: 30px; padding: 20px; }
+    .stat-number { font-size: 1.6rem; }
+}
 </style>
-"""
-
-st.markdown(custom_css, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # ============================================================
-# DADOS DOS PROJETOS POWER BI
+# DADOS DOS PROJETOS
 # ============================================================
-PBI_PROJECTS = [
+pbi_projects = [
     {
         "title": "Transporte - Travel Company",
         "icon": "🚛",
@@ -300,9 +652,9 @@ PBI_PROJECTS = [
     },
 ]
 
-# Agrupa projetos por categoria
+# Agrupa por categoria
 projects_by_category = defaultdict(list)
-for p in PBI_PROJECTS:
+for p in pbi_projects:
     projects_by_category[p["category"]].append(p)
 
 CATEGORY_ICONS = {
@@ -312,179 +664,258 @@ CATEGORY_ICONS = {
     "Setor Público & Geral": "🏛️",
 }
 
+CATEGORY_ORDER = ["Estratégico & Financeiro", "Operações & Logística", "RH & People Analytics", "Setor Público & Geral"]
+
 # ============================================================
 # ESTADO DA SESSÃO
 # ============================================================
 if "selected_project" not in st.session_state:
     st.session_state.selected_project = None
 
-if "expanded_categories" not in st.session_state:
-    st.session_state.expanded_categories = set(projects_by_category.keys())
+if "active_category" not in st.session_state:
+    st.session_state.active_category = "Todos"
 
 # ============================================================
-# BOTÃO COLLAPSE (JavaScript)
+# FUNÇÃO: RENDERIZAR CARD
 # ============================================================
-collapse_js = """
-<script>
-    function toggleSidebar() {
-        const sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
-        const btn = window.parent.document.querySelector('.collapse-btn');
-        if (sidebar) {
-            const isExpanded = sidebar.style.marginLeft !== '-320px';
-            if (isExpanded) {
-                sidebar.style.marginLeft = '-320px';
-                sidebar.style.width = '0px';
-                if (btn) btn.innerHTML = '☰';
-            } else {
-                sidebar.style.marginLeft = '0px';
-                sidebar.style.width = '320px';
-                if (btn) btn.innerHTML = '✕';
-            }
-        }
-    }
-    function createCollapseButton() {
-        let btn = window.parent.document.querySelector('.collapse-btn');
-        if (!btn) {
-            btn = document.createElement('button');
-            btn.className = 'collapse-btn';
-            btn.innerHTML = '✕';
-            btn.title = 'Toggle Sidebar';
-            btn.onclick = toggleSidebar;
-            window.parent.document.body.appendChild(btn);
-        }
-    }
-    setTimeout(createCollapseButton, 500);
-    setInterval(createCollapseButton, 2000);
-</script>
-"""
-html(collapse_js, height=0)
+def render_card(p, idx):
+    import urllib.parse
 
-# ============================================================
-# SIDEBAR - CATEGORIAS E PROJETOS
-# ============================================================
-with st.sidebar:
-    # Logo
-    st.markdown("""
-    <div class="sidebar-logo">
-        <div class="sidebar-logo-icon">📊</div>
-        <div>
-            <div class="sidebar-logo-text">PBI Portfolio</div>
-            <div class="sidebar-logo-sub">Power BI Dashboards</div>
+    mensagem_whatsapp = (
+        f"Olá! Veja que excelente dashboard de Power BI:\n\n"
+        f"📊 *{p['title']}*\n"
+        f"ℹ️ {p['desc']}\n\n"
+        f"🔗 Aceda ao painel completo aqui: {p['url']}"
+    )
+    wa_link = f"https://wa.me/?text={urllib.parse.quote(mensagem_whatsapp)}"
+
+    li_base = "https://www.linkedin.com/shareArticle?mini=true"
+    li_title = urllib.parse.quote(p['title'])
+    li_summary = urllib.parse.quote(f"Solução de BI: {p['desc']}")
+    li_url = urllib.parse.quote(p['url'])
+    li_link = f"{li_base}&url={li_url}&title={li_title}&summary={li_summary}"
+
+    st.markdown(f"""
+    <div class="ux-card">
+        <div style="display:flex; flex-direction:column; flex-grow:1;">
+            <div class="card-top">
+                <div class="card-icon-box">{p['icon']}</div>
+                <div>
+                    <div class="card-category-tag">{p['category']}</div>
+                    <div class="ux-card-title">{p['title']}</div>
+                </div>
+            </div>
+            <div class="ux-card-desc">{p['desc']}</div>
+        </div>
+        <div class="card-actions">
+            <div class="share-row">
+                <span class="share-txt">Compartilhar</span>
+                <div class="share-links">
+                    <a href="{wa_link}" target="_blank" class="share-btn-item wa">
+                        <span>📱</span> WhatsApp
+                    </a>
+                    <a href="{li_link}" target="_blank" class="share-btn-item li">
+                        <span>💼</span> LinkedIn
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Label de seção
-    st.markdown('<div class="menu-section-label">📁 Categorias</div>', unsafe_allow_html=True)
-    
-    # Renderiza cada categoria e seus projetos
-    for cat_name, projects in projects_by_category.items():
-        cat_icon = CATEGORY_ICONS.get(cat_name, "📁")
-        is_expanded = cat_name in st.session_state.expanded_categories
-        
-        # Botão da categoria (toggle expand)
-        cat_label = f"{cat_icon} {cat_name}"
-        if st.button(
-            f"{cat_label} ({len(projects)})",
-            key=f"cat_{cat_name}",
-            use_container_width=True,
-            type="secondary" if not is_expanded else "primary"
-        ):
-            if is_expanded:
-                st.session_state.expanded_categories.discard(cat_name)
-            else:
-                st.session_state.expanded_categories.add(cat_name)
-            st.rerun()
-        
-        # Se expandido, mostra os projetos
-        if is_expanded:
-            for proj in projects:
-                proj_idx = PBI_PROJECTS.index(proj)
-                is_selected = st.session_state.selected_project == proj_idx
-                
-                btn_type = "primary" if is_selected else "secondary"
-                if st.button(
-                    f"{proj['icon']} {proj['title']}",
-                    key=f"proj_{proj_idx}",
-                    use_container_width=True,
-                    type=btn_type
-                ):
-                    st.session_state.selected_project = proj_idx
-                    st.rerun()
-    
-    # Footer
+
+    if st.button("▶️ Visualizar Dashboard", key=f"open_{idx}", use_container_width=True):
+        st.session_state.selected_project = idx
+        st.rerun()
+
+# ============================================================
+# VIEW: DASHBOARD EMBED
+# ============================================================
+if st.session_state.selected_project is not None:
+    project = pbi_projects[st.session_state.selected_project]
+
+    # Navbar minimal no embed
     st.markdown("""
-    <div class="sidebar-footer">
-        <p>© 2026 PBI Portfolio • Powered by Streamlit</p>
+    <div class="navbar">
+        <div class="navbar-logo">
+            <div class="navbar-logo-icon">📊</div>
+            <div class="navbar-logo-text">PBI Portfolio</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-# ============================================================
-# CONTEÚDO PRINCIPAL
-# ============================================================
-if st.session_state.selected_project is not None:
-    project = PBI_PROJECTS[st.session_state.selected_project]
-    
-    # Header com botão voltar
+    st.markdown('<div class="embed-view">', unsafe_allow_html=True)
+
     col1, col2 = st.columns([1, 12])
     with col1:
-        if st.button("←", use_container_width=True, help="Voltar para lista"):
+        if st.button("← Voltar", use_container_width=True):
             st.session_state.selected_project = None
             st.rerun()
     with col2:
         st.markdown(f"""
-        <div class="main-header" style="margin-bottom: 1rem;">
-            <div>
-                <h1>{project["icon"]} {project["title"]}</h1>
-                <p>{project["category"]} • Power BI Embedded</p>
-            </div>
+        <div class="embed-header">
+            <div class="embed-title">{project['icon']} {project['title']}</div>
         </div>
         """, unsafe_allow_html=True)
-    
-    # Embed do Power BI
+
     st.markdown(f"""
     <div class="embed-container">
-        <iframe 
-            src="{project["url"]}" 
-            frameborder="0" 
-            allowFullScreen="true">
-        </iframe>
+        <iframe src="{project['url']}" frameborder="0" allowFullScreen="true"></iframe>
     </div>
     """, unsafe_allow_html=True)
 
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ============================================================
+# VIEW: LANDING PAGE
+# ============================================================
 else:
-    # Página inicial
+    # --- NAVBAR ---
     st.markdown("""
-    <div class="main-header">
-        <div>
-            <h1>📊 Portfólio Power BI</h1>
-            <p>Selecione um dashboard no menu lateral para visualizar</p>
+    <div class="navbar">
+        <div class="navbar-logo">
+            <div class="navbar-logo-icon">📊</div>
+            <div class="navbar-logo-text">PBI Portfolio</div>
+        </div>
+        <div class="navbar-links">
+            <a href="#projetos">Projetos</a>
+            <a href="#sobre">Sobre</a>
+            <a href="#contato">Contato</a>
         </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Grid de projetos
-    cols_per_row = 3
-    for i in range(0, len(PBI_PROJECTS), cols_per_row):
-        cols = st.columns(cols_per_row)
-        for j, col in enumerate(cols):
-            idx = i + j
-            if idx < len(PBI_PROJECTS):
-                proj = PBI_PROJECTS[idx]
-                with col:
-                    with st.container():
-                        st.markdown(f"### {proj['icon']} {proj['title']}")
-                        st.caption(f"🏷️ {proj['category']}")
-                        st.write(proj['desc'])
-                        if st.button("▶️ Abrir Dashboard", key=f"open_{idx}", use_container_width=True):
-                            st.session_state.selected_project = idx
-                            st.rerun()
-                        st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
-    
-    # Estatísticas
-    st.markdown("---")
-    stats = st.columns(4)
-    stats[0].metric("📊 Total", len(PBI_PROJECTS))
-    stats[1].metric("📁 Categorias", len(projects_by_category))
-    stats[2].metric("⚙️ Operações", len(projects_by_category.get("Operações & Logística", [])))
-    stats[3].metric("💹 Financeiro", len(projects_by_category.get("Estratégico & Financeiro", [])))
+
+    # --- HERO SECTION ---
+    total = len(pbi_projects)
+    st.markdown(f"""
+    <div class="hero-section">
+        <div class="hero-badge">📊 Portfólio de Alta Performance</div>
+        <h1 class="hero-title">Dashboards que transformam<br><span class="accent">Dados em Lucro</span></h1>
+        <p class="hero-subtitle">Arquitetura de BI de nível corporativo. Explore soluções segmentadas por verticais de negócio e tome decisões baseadas em dados.</p>
+        <div class="hero-cta-row">
+            <a href="#projetos" class="hero-cta-primary">Explorar Projetos</a>
+            <a href="#sobre" class="hero-cta-secondary">Saiba Mais</a>
+        </div>
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number">{total}</div>
+                <div class="stat-label">Painéis Ativos</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Verticais</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Foco em Decisão</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">+20</div>
+                <div class="stat-label">Anos de Experiência</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # --- SEARCH BAR ---
+    st.markdown('<div id="projetos"></div>', unsafe_allow_html=True)
+    st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
+
+    col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
+    with col_s2:
+        search_query = st.text_input(
+            label="Buscar",
+            placeholder="Busque por: RH, Financeiro, Logística, Vendas...",
+            key="search_pbi",
+            label_visibility="collapsed"
+        )
+
+    # --- CATEGORY FILTERS ---
+    st.markdown('<div class="category-tabs">', unsafe_allow_html=True)
+
+    cats = ["Todos"] + CATEGORY_ORDER
+    filter_cols = st.columns(len(cats))
+    for i, cat in enumerate(cats):
+        with filter_cols[i]:
+            is_active = st.session_state.active_category == cat
+            btn_type = "primary" if is_active else "secondary"
+            count = total if cat == "Todos" else len(projects_by_category.get(cat, []))
+            label = f"{cat} ({count})" if cat != "Todos" else f"📁 Todos ({count})"
+            if st.button(label, key=f"filter_{cat}", use_container_width=True, type=btn_type):
+                st.session_state.active_category = cat
+                st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- SECTION HEADER ---
+    st.markdown("""
+    <div class="section-header">
+        <div class="section-label">Portfólio</div>
+        <h2 class="section-title">Soluções por Categoria</h2>
+        <p class="section-desc">Cada dashboard foi desenvolvido com foco em resolver problemas reais de negócio.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # --- RENDER PROJECTS ---
+    if search_query:
+        search_terms = search_query.lower().split()
+        filtered = []
+        for p in pbi_projects:
+            text = f"{p['title']} {p['desc']} {p['category']} {p['icon']}".lower()
+            if all(t in text for t in search_terms):
+                filtered.append(p)
+
+        if filtered:
+            st.markdown(f"<p style='color:#64748b; text-align:center; margin-bottom:30px;'>🔍 {len(filtered)} resultado(s) encontrado(s)</p>", unsafe_allow_html=True)
+            for i in range(0, len(filtered), 3):
+                cols = st.columns(3)
+                for j in range(3):
+                    idx = i + j
+                    if idx < len(filtered):
+                        with cols[j]:
+                            real_idx = pbi_projects.index(filtered[idx])
+                            render_card(filtered[idx], real_idx)
+        else:
+            st.markdown("""
+            <div style="text-align:center; padding: 60px 20px; color: #64748b;">
+                <p style="font-size:3rem; margin-bottom:16px;">🔍</p>
+                <h3 style="color:#f0f4ff; font-family:'Syne',sans-serif; margin-bottom:8px;">Nenhum resultado encontrado</h3>
+                <p>Tente buscar por termos mais amplos ou verifique a ortografia.</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    else:
+        # Filtra por categoria ativa
+        cats_to_show = CATEGORY_ORDER if st.session_state.active_category == "Todos" else [st.session_state.active_category]
+
+        for cat_name in cats_to_show:
+            cat_projects = [p for p in pbi_projects if p["category"] == cat_name]
+            if not cat_projects:
+                continue
+
+            cat_icon = CATEGORY_ICONS.get(cat_name, "📁")
+            st.markdown(f"""
+            <div style="margin: 50px 0 24px; padding-left: 12px; border-left: 3px solid #00b4d8;">
+                <h3 style="font-family:'Syne',sans-serif !important; font-size:1.3rem; font-weight:700; color:#f0f4ff; margin:0;">
+                    {cat_icon} {cat_name}
+                </h3>
+                <p style="color:#64748b; font-size:0.85rem; margin:4px 0 0 0;">{len(cat_projects)} projeto(s) nesta categoria</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            for i in range(0, len(cat_projects), 3):
+                cols = st.columns(3)
+                for j in range(3):
+                    idx_proj = i + j
+                    if idx_proj < len(cat_projects):
+                        with cols[j]:
+                            real_idx = pbi_projects.index(cat_projects[idx_proj])
+                            render_card(cat_projects[idx_proj], real_idx)
+
+    # --- FOOTER ---
+    st.markdown("""
+    <div class="landing-footer">
+        <div class="footer-brand">📊 PBI Portfolio</div>
+        <p>Dashboards Power BI de alta performance para decisões estratégicas.</p>
+        <p style="margin-top:16px; font-size:0.7rem; color:#334155;">© 2026 PBI Portfolio • Todos os direitos reservados</p>
+    </div>
+    """, unsafe_allow_html=True)
